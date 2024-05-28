@@ -1,17 +1,33 @@
+import jwt from "jsonwebtoken";
 import { User } from "@prisma/client";
-import JWT from "jsonwebtoken"
+import { JWTUser } from "../interfaces";
 
-class JWTService{
-    public static generateTokenForUser = (user: User)=>{
-        const payload = {
-            id: user?.id,
-            email: user?.email
-        }
+const JWT_SECRET = "$uper@1234.";
 
-        const token = JWT.sign(payload, process.env.JWT_SECRETE || "87shsdkugdt67g");
+class JWTService {
+  public static generateTokenForUser(user: User) {
+    console.log("User While Encoding: ", user);
 
-        return token;
+    const payload: JWTUser = {
+      id: user?.id,
+      email: user?.email,
+    };
+    const token = jwt.sign(payload, JWT_SECRET);
+    console.log(token);
+    return token;
+  }
+
+  public static async decodeToken(token: string) {
+    try {
+      // console.log("Token: ", token); // Log the token to ensure it's correct
+      const decoded = jwt.verify(token, JWT_SECRET);
+      // console.log("Decoded: ", decoded);
+      return decoded;
+    } catch (error) {
+      console.error("Error in decoding:", error); // Log the exact error message
+      return null;
     }
+  }
 }
 
 export default JWTService;
