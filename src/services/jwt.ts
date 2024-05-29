@@ -6,14 +6,14 @@ const JWT_SECRET = "$uper@1234.";
 
 class JWTService {
   public static generateTokenForUser(user: User) {
-    console.log("User While Encoding: ", user);
+    // console.log("User While Encoding: ", user);
 
     const payload: JWTUser = {
       id: user?.id,
       email: user?.email,
     };
     const token = jwt.sign(payload, JWT_SECRET);
-    console.log(token);
+    // console.log(token);
     return token;
   }
 
