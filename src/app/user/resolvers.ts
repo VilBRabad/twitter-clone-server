@@ -73,7 +73,9 @@ const queries = {
         const user = await prismaClient.user.findUnique({where: {id}})
         // console.log("User :", user)
         return user;
-    }
+    },
+
+    getUserById: async(parent:any, {id}:{id: string}, ctx:GraphqlContext)=> await prismaClient.user.findUnique({where: {id}}),
 };
 
 const extraResolver = {
