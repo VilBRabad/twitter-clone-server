@@ -5,14 +5,15 @@ import { JWTUser } from "../interfaces";
 const JWT_SECRET = "$uper@1234.";
 
 class JWTService {
-  public static generateTokenForUser(user: User) {
+  public static async generateTokenForUser(user: User) {
     // console.log("User While Encoding: ", user);
 
     const payload: JWTUser = {
       id: user?.id,
       email: user?.email,
     };
-    const token = jwt.sign(payload, JWT_SECRET);
+    
+    const token = await jwt.sign(payload, JWT_SECRET);
     // console.log(token);
     return token;
   }
@@ -20,7 +21,7 @@ class JWTService {
   public static async decodeToken(token: string) {
     try {
       // console.log("Token: ", token); // Log the token to ensure it's correct
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = await jwt.verify(token, JWT_SECRET);
       // console.log("Decoded: ", decoded);
       return decoded;
     } catch (error) {

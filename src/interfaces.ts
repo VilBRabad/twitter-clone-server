@@ -4,5 +4,5 @@ export interface JWTUser{
 }
 
 export interface GraphqlContext {
-    user?: JWTUser
+    user?: JWTUser;
 }

@@ -22,9 +22,24 @@ model User {
 
   posts Post[]
 
+  follower Follows[] @relation("follower")
+  following Follows[] @relation("following")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+
+model Follows {
+  follower   User   @relation("follower", fields: [followerId], references: [id])
+  followerId String
+
+  following   User   @relation("following", fields: [followingId], references: [id])
+  followingId String
+
+  @@id([followerId, followingId])
+}
+
 
 model Post {
   id       String  @id @default(cuid())
