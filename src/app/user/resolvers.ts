@@ -2,6 +2,7 @@ import { prismaClient } from "../../client/db";
 import { GraphqlContext } from "../../interfaces";
 import { User } from "@prisma/client";
 import UserServices from "../../services/user";
+import { redisClient } from "../../client/redis";
 
 
 
@@ -61,6 +62,12 @@ const extraResolver = {
             // console.log(ctxUser);
             if(!ctxUser) return [];
 
+            const cacheData = await redisClient.get(`RECOMMENDED_USER:${ctxUser.id}`);
+            if(cacheData) {
+                console.log("CACHED DATA");
+                return JSON.parse(cacheData);
+            }
+
             const myFollowingUser = await prismaClient.follows.findMany({
                 where: {
                     follower: {id: ctxUser.id},
@@ -83,6 +90,8 @@ const extraResolver = {
                     }
                 }
             }
+
+            await redisClient.set(`RECOMMENDED_USER:${ctxUser.id}`, JSON.stringify(user));
             return user;
         }
 
@@ -100,6 +109,7 @@ const mutations = {
         console.log(ctxUser.id, to);
 
         await UserServices.followUser(ctxUser.id, to);
+        await redisClient.del(`RECOMMENDED_USER:${ctxUser.id}`);
         return true;
     },
     unFollowUser: async(parent: any, {to}:{to:string}, ctx: GraphqlContext)=>{
@@ -107,6 +117,7 @@ const mutations = {
         if(!ctxUser) throw new Error("Un-authenticated!");
         
         await UserServices.unFollowUser(ctxUser.id, to);
+        await redisClient.del(`RECOMMENDED_USER:${ctxUser.id}`);
         return true;
     }
 }

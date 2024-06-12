@@ -5,6 +5,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import UserServices from "../../services/user";
 import PostServices, { CreatePostPayload } from "../../services/post";
+import { redisClient } from "../../client/redis";
 
 
 const s3Client = new S3Client({
@@ -13,7 +14,15 @@ const s3Client = new S3Client({
 
 
 const queries = {
-    getAllPosts: async()=> await PostServices.getAllPosts(),
+    getAllPosts: async()=> {
+        const cacheData = await redisClient.get("ALL_TWEETS");
+        if(cacheData) return JSON.parse(cacheData);
+
+        const posts = await PostServices.getAllPosts();
+        await redisClient.set("ALL_TWEETS", JSON.stringify(posts));
+
+        return posts;
+    },
 
     getPreSignedURLForPost: async(parent: any, {imageType}:{imageType: string}, ctx:GraphqlContext)=>{
         const user = await ctx.user;
@@ -45,13 +54,18 @@ const mutations = {
     createPost: async(parent:any, {payload}:{payload: CreatePostPayload}, ctx:GraphqlContext)=>{
         const ctxUser = await ctx.user;
         if(!ctxUser) throw new Error("You are not logged in!!");
-        console.log(ctxUser);
+
+        const rateLimitFlag = await redisClient.get(`CREATE_TWEET:TWEET:${ctxUser.id}`);
+        if(rateLimitFlag) throw new Error("Please wait....");
+        
         const post = await PostServices.createPost({
             ...payload,
             userId: ctxUser.id
         });
 
-        return post
+        await redisClient.setex(`CREATE_TWEET:TWEET:${ctxUser.id}`, 10, 1);
+        await redisClient.del("ALL_TWEETS");
+        return post;
     },
 
 };
