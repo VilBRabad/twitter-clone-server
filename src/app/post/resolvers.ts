@@ -46,6 +46,15 @@ const queries = {
         const signedURL = await getSignedUrl(s3Client, putObjectCommand);
 
         return signedURL;
+    },
+
+    getPostsOfFollowings: async(parent: any, {}:{}, ctx:GraphqlContext)=>{
+        const ctxUser = await ctx.user;
+        if(!ctxUser) return [];
+
+        const posts = await PostServices.getPostsOfFollowings(ctxUser);
+
+        return posts;
     }
 }
 

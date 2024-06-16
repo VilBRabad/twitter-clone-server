@@ -1,4 +1,5 @@
 import { prismaClient } from "../client/db";
+import { JWTUser } from "../interfaces";
 
 export interface CreatePostPayload{
     content: string;
@@ -23,6 +24,35 @@ class PostServices{
         // console.log(resutl);
         return resutl;
     };
+
+    public static async getPostsOfFollowings(ctxUser: JWTUser){
+        const followings = await prismaClient.follows.findMany({
+            where: {
+                followerId: ctxUser.id,
+            },
+            select: {
+                followingId: true,
+            }
+        })
+
+        const followingIds = followings.map(el=> el.followingId);
+        followingIds.push(ctxUser.id);
+
+        const posts = await prismaClient.post.findMany({
+            where: {
+                authorId: {
+                    in: followingIds,
+                }
+            },
+            include: {
+                author: true,
+            },
+            orderBy: {
+                createdAt: "desc"
+            }
+        })
+        return posts;
+    }
 }
 
 export default PostServices;
